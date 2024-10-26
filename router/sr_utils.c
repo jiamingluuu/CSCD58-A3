@@ -1,24 +1,27 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include "sr_protocol.h"
 #include "sr_utils.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-uint16_t cksum (const void *_data, int len) {
+#include "sr_protocol.h"
+
+uint16_t cksum(const void *_data, int len) {
   const uint8_t *data = _data;
   uint32_t sum;
 
-  for (sum = 0;len >= 2; data += 2, len -= 2)
+  for (sum = 0; len >= 2; data += 2, len -= 2) {
     sum += data[0] << 8 | data[1];
-  if (len > 0)
+  }
+  if (len > 0) {
     sum += data[0] << 8;
-  while (sum > 0xffff)
+  }
+  while (sum > 0xffff) {
     sum = (sum >> 16) + (sum & 0xffff);
-  sum = htons (~sum);
+  }
+  sum = htons(~sum);
   return sum ? sum : 0xffff;
 }
-
 
 uint16_t ethertype(uint8_t *buf) {
   sr_ethernet_hdr_t *ehdr = (sr_ethernet_hdr_t *)buf;
@@ -30,15 +33,15 @@ uint8_t ip_protocol(uint8_t *buf) {
   return iphdr->ip_p;
 }
 
-
 /* Prints out formatted Ethernet address, e.g. 00:11:22:33:44:55 */
 void print_addr_eth(uint8_t *addr) {
   int pos = 0;
   uint8_t cur;
   for (; pos < ETHER_ADDR_LEN; pos++) {
     cur = addr[pos];
-    if (pos > 0)
+    if (pos > 0) {
       fprintf(stderr, ":");
+    }
     fprintf(stderr, "%02X", cur);
   }
   fprintf(stderr, "\n");
@@ -47,10 +50,11 @@ void print_addr_eth(uint8_t *addr) {
 /* Prints out IP address as a string from in_addr */
 void print_addr_ip(struct in_addr address) {
   char buf[INET_ADDRSTRLEN];
-  if (inet_ntop(AF_INET, &address, buf, 100) == NULL)
-    fprintf(stderr,"inet_ntop error on address conversion\n");
-  else
+  if (inet_ntop(AF_INET, &address, buf, 100) == NULL) {
+    fprintf(stderr, "inet_ntop error on address conversion\n");
+  } else {
     fprintf(stderr, "%s\n", buf);
+  }
 }
 
 /* Prints out IP address from integer value */
@@ -64,7 +68,6 @@ void print_addr_ip_int(uint32_t ip) {
   curOctet = (ip << 24) >> 24;
   fprintf(stderr, "%d\n", curOctet);
 }
-
 
 /* Prints out fields in Ethernet header. */
 void print_hdr_eth(uint8_t *buf) {
@@ -87,12 +90,13 @@ void print_hdr_ip(uint8_t *buf) {
   fprintf(stderr, "\tlength: %d\n", ntohs(iphdr->ip_len));
   fprintf(stderr, "\tid: %d\n", ntohs(iphdr->ip_id));
 
-  if (ntohs(iphdr->ip_off) & IP_DF)
+  if (ntohs(iphdr->ip_off) & IP_DF) {
     fprintf(stderr, "\tfragment flag: DF\n");
-  else if (ntohs(iphdr->ip_off) & IP_MF)
+  } else if (ntohs(iphdr->ip_off) & IP_MF) {
     fprintf(stderr, "\tfragment flag: MF\n");
-  else if (ntohs(iphdr->ip_off) & IP_RF)
+  } else if (ntohs(iphdr->ip_off) & IP_RF) {
     fprintf(stderr, "\tfragment flag: R\n");
+  }
 
   fprintf(stderr, "\tfragment offset: %d\n", ntohs(iphdr->ip_off) & IP_OFFMASK);
   fprintf(stderr, "\tTTL: %d\n", iphdr->ip_ttl);
@@ -118,7 +122,6 @@ void print_hdr_icmp(uint8_t *buf) {
   fprintf(stderr, "\tchecksum: %d\n", icmp_hdr->icmp_sum);
 }
 
-
 /* Prints out fields in ARP header */
 void print_hdr_arp(uint8_t *buf) {
   sr_arp_hdr_t *arp_hdr = (sr_arp_hdr_t *)(buf);
@@ -142,7 +145,6 @@ void print_hdr_arp(uint8_t *buf) {
 
 /* Prints out all possible headers, starting from Ethernet */
 void print_hdrs(uint8_t *buf, uint32_t length) {
-
   /* Ethernet */
   int minlength = sizeof(sr_ethernet_hdr_t);
   if (length < minlength) {
@@ -165,21 +167,20 @@ void print_hdrs(uint8_t *buf, uint32_t length) {
 
     if (ip_proto == ip_protocol_icmp) { /* ICMP */
       minlength += sizeof(sr_icmp_hdr_t);
-      if (length < minlength)
+      if (length < minlength) {
         fprintf(stderr, "Failed to print ICMP header, insufficient length\n");
-      else
+      } else {
         print_hdr_icmp(buf + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+      }
     }
-  }
-  else if (ethtype == ethertype_arp) { /* ARP */
+  } else if (ethtype == ethertype_arp) { /* ARP */
     minlength += sizeof(sr_arp_hdr_t);
-    if (length < minlength)
+    if (length < minlength) {
       fprintf(stderr, "Failed to print ARP header, insufficient length\n");
-    else
+    } else {
       print_hdr_arp(buf + sizeof(sr_ethernet_hdr_t));
-  }
-  else {
+    }
+  } else {
     fprintf(stderr, "Unrecognized Ethernet Type: %d\n", ethtype);
   }
 }
-
