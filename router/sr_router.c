@@ -209,6 +209,47 @@ void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len
   }
 }
 
+// [x] send_arp_reply
+// @param sr the router instance
+// @param arp_hdr the ARP header
+// @param interface the interface to send the ARP reply
+void send_arp_reply(struct sr_instance *sr, sr_arp_hdr_t *arp_hdr, char *interface) {
+  // Allocate memory for the ARP reply
+  unsigned int arp_reply_len = sizeof(struct sr_ethernet_hdr) + sizeof(struct sr_arp_hdr);
+  uint8_t *arp_reply = (uint8_t *)malloc(arp_reply_len);
+
+  // Cache sr_get_interface(sr, interface)
+  struct sr_if *iface = sr_get_interface(sr, interface);
+  if (!iface) {
+    fprintf(stderr, "Interface not found.\n");
+    return;
+  }
+
+  // Fill Ethernet Header
+  struct sr_ethernet_hdr *eth_hdr = (struct sr_ethernet_hdr *)arp_reply;
+  memcpy(eth_hdr->ether_dhost, arp_hdr->ar_sha, ETHER_ADDR_LEN);
+  memcpy(eth_hdr->ether_shost, iface->addr, ETHER_ADDR_LEN);
+  eth_hdr->ether_type = htons(ethertype_arp);
+
+  // Fill ARP Header
+  struct sr_arp_hdr *new_arp_hdr = (struct sr_arp_hdr *)(arp_reply + sizeof(struct sr_ethernet_hdr));
+  new_arp_hdr->ar_hrd = htons(arp_hrd_ethernet);
+  new_arp_hdr->ar_pro = htons(ethertype_ip);
+  new_arp_hdr->ar_hln = ETHER_ADDR_LEN;
+  new_arp_hdr->ar_pln = sizeof(uint32_t);
+  new_arp_hdr->ar_op = htons(arp_op_reply);
+  memcpy(new_arp_hdr->ar_sha, iface->addr, ETHER_ADDR_LEN);
+  new_arp_hdr->ar_sip = iface->ip;
+  memcpy(new_arp_hdr->ar_tha, arp_hdr->ar_sha, ETHER_ADDR_LEN);
+  new_arp_hdr->ar_tip = arp_hdr->ar_sip;
+
+  // Send the ARP reply
+  sr_send_packet(sr, arp_reply, arp_reply_len, interface);
+
+  // Free the memory
+  free(arp_reply);
+}
+
 struct sr_if *get_dst_interface(const struct sr_instance *sr, const sr_ip_hdr_t *ip_hdr) {
   struct sr_if *if_walker = sr->if_list;
   while (if_walker != NULL) {
