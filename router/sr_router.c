@@ -67,18 +67,13 @@ void sr_init(struct sr_instance *sr) {
  *
  *---------------------------------------------------------------------*/
 
-static void handle_ip_packet(struct sr_instance *sr, uint8_t *packet,
-                             unsigned int len, char *interface);
-static void handle_arp_packet(struct sr_instance *sr, uint8_t *packet,
-                              unsigned int len, char *interface);
-static struct sr_if *get_dst_interface(const struct sr_instance *sr,
-                                       const sr_ip_hdr_t *ip_hdr);
-static void send_icmp_response(struct sr_instance *sr, uint8_t *packet,
-                               unsigned int len, char *interface, uint8_t type,
+static void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface);
+static void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface);
+static struct sr_if *get_dst_interface(const struct sr_instance *sr, const sr_ip_hdr_t *ip_hdr);
+static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface, uint8_t type,
                                uint8_t code);
 
-void sr_handlepacket(struct sr_instance *sr, uint8_t *packet /* lent */,
-                     unsigned int len, char *interface /* lent */) {
+void sr_handlepacket(struct sr_instance *sr, uint8_t *packet /* lent */, unsigned int len, char *interface /* lent */) {
   uint16_t type;
 
   /* REQUIRES */
@@ -98,8 +93,7 @@ void sr_handlepacket(struct sr_instance *sr, uint8_t *packet /* lent */,
 } /* end sr_ForwardPacket */
 
 // TODO: Implements this function.
-void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
-                      char *interface) {
+void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface) {
   uint16_t header_checksum;
   sr_ip_hdr_t *ip_hdr;
   sr_icmp_hdr_t *icmp_hdr;
@@ -129,12 +123,9 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
     if (ip_protocol_icmp == ip_hdr->ip_p) {
       // The packet is an ICMP echo request, send an ICMP echo reply to the
       // sending host.
-      icmp_hdr = (sr_icmp_hdr_t *)(packet + sizeof(struct sr_ethernet_hdr) +
-                                   sizeof(sr_ip_hdr_t));
+      icmp_hdr = (sr_icmp_hdr_t *)(packet + sizeof(struct sr_ethernet_hdr) + sizeof(sr_ip_hdr_t));
       if (icmp_hdr->icmp_type == (uint8_t)8) {
-        header_checksum =
-            cksum((const void *)icmp_hdr,
-                  len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
+        header_checksum = cksum((const void *)icmp_hdr, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
         if (header_checksum != icmp_hdr->icmp_sum) {
           LOG_INFO("ICMP: Wrong header checksum.");
           return;
@@ -167,9 +158,8 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
   }
 }
 
-// TODO(Wei Zheyuan): Implements this function.
-void handle_arp_packet(struct sr_instance *sr, uint8_t *packet,
-                       unsigned int len, char *interface) {
+// [ ] (Wei Zheyuan): Implements this function.
+void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface) {
   // if the packet is an ARP request
   // - send an ARP reply if the target IP address is one of your router’s IP
   //   addresses.
@@ -179,8 +169,7 @@ void handle_arp_packet(struct sr_instance *sr, uint8_t *packet,
   return;
 }
 
-struct sr_if *get_dst_interface(const struct sr_instance *sr,
-                                const sr_ip_hdr_t *ip_hdr) {
+struct sr_if *get_dst_interface(const struct sr_instance *sr, const sr_ip_hdr_t *ip_hdr) {
   struct sr_if *if_walker = sr->if_list;
   while (if_walker != NULL) {
     if (if_walker->ip == ip_hdr->ip_dst) {
@@ -192,8 +181,8 @@ struct sr_if *get_dst_interface(const struct sr_instance *sr,
 }
 
 // TODO: Implements this function.
-static void send_icmp_response(struct sr_instance *sr, uint8_t *packet,
-                               unsigned int len, char *interface, uint8_t type,
+// [ ] This function has been implemented in `sr_arpcache.c:sr_send_icmp_t3`. Move here.
+static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface, uint8_t type,
                                uint8_t code) {
   return;
 }
