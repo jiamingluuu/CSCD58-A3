@@ -43,6 +43,7 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *req) {
       // resend the request
       uint8_t *arp_req = create_arp_request(sr, req->ip);
       sr_send_packet(sr, arp_req, ARP_PACKET_LEN, req->packets->iface);
+      free(arp_req);
       req->sent = now;
       req->times_sent++;
     }
