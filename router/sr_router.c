@@ -166,7 +166,43 @@ void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len
   // else if the packet is an ARP response
   // - cache the entry if the target IP address is one of your router’s IP
   //   addresses
-  return;
+
+  // Separate the Ethernet header and ARP header
+  struct sr_ethernet_hdr *eth_hdr = (struct sr_ethernet_hdr *)packet;
+  struct sr_arp_hdr *arp_hdr = (struct sr_arp_hdr *)(packet + sizeof(struct sr_ethernet_hdr));
+
+  // Sanity check
+  if (len < sizeof(struct sr_ethernet_hdr) + sizeof(struct sr_arp_hdr)) {
+    fprintf(stderr, "ARP packet length is less than minimum required length.\n");
+    return;
+  }
+
+  // Get the target IP address
+  uint32_t target_ip = ntohl(arp_hdr->ar_tip);
+
+  // Check if target IP is one of the router's interface IP
+  struct sr_if *iface = sr_get_interface(sr, interface);
+  if (!iface) {
+    fprintf(stderr, "Interface not found.\n");
+    return;
+  }
+
+  if (arp_hdr->ar_op == htons(arp_op_request)) {  // Is ARP request
+    if (target_ip == iface->ip) {                 // Match the target IP
+      send_arp_reply(sr, arp_hdr, interface);
+    }
+  } else if (arp_hdr->ar_op == htons(arp_op_reply)) {  // Is ARP response
+    // Cache ARP response
+    struct sr_arpreq *req = sr_arpcache_insert(&sr->cache, arp_hdr->ar_sha, arp_hdr->ar_sip);
+    if (req) {
+      struct sr_packet *waiting_pkt = req->packets;
+      while (waiting_pkt != NULL) {
+        sr_send_packet(sr, waiting_pkt->buf, waiting_pkt->len, waiting_pkt->iface);
+        waiting_pkt = waiting_pkt->next;
+      }
+      sr_arpreq_destroy(&sr->cache, req);
+    }
+  }
 }
 
 struct sr_if *get_dst_interface(const struct sr_instance *sr, const sr_ip_hdr_t *ip_hdr) {
