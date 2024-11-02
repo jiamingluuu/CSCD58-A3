@@ -222,6 +222,7 @@ void send_arp_reply(struct sr_instance *sr, sr_arp_hdr_t *arp_hdr, char *interfa
   struct sr_if *iface = sr_get_interface(sr, interface);
   if (!iface) {
     fprintf(stderr, "Interface not found.\n");
+    free(arp_reply);
     return;
   }
 
