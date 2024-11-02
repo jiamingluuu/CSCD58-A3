@@ -158,7 +158,7 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
   }
 }
 
-// [ ] (Wei Zheyuan): Implements this function.
+// [x] (Wei Zheyuan): Implements this function.
 void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface) {
   // if the packet is an ARP request
   // - send an ARP reply if the target IP address is one of your router’s IP
@@ -188,23 +188,23 @@ void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len
     return;
   }
   while (if_walker != NULL) {
-  if (arp_hdr->ar_op == htons(arp_op_request)) {  // Is ARP request
-    if (target_ip == iface->ip) {                 // Match the target IP
-      send_arp_reply(sr, arp_hdr, interface);     // Respond
-    }
-  } else if (arp_hdr->ar_op == htons(arp_op_reply)) {  // Is ARP response
-    // Cache & send if match
-    struct sr_arpreq *req = sr_arpcache_insert(&sr->cache, arp_hdr->ar_sha, arp_hdr->ar_sip);
-    if (req) {  // Found in ARP request queue
-      struct sr_packet *waiting_pkt = req->packets;
-      while (waiting_pkt != NULL) {
-        sr_send_packet(sr, waiting_pkt->buf, waiting_pkt->len, waiting_pkt->iface);
-        waiting_pkt = waiting_pkt->next;
+    if (arp_hdr->ar_op == htons(arp_op_request)) {  // Is ARP request
+      if (target_ip == iface->ip) {                 // Match the target IP
+        send_arp_reply(sr, arp_hdr, interface);     // Respond
       }
-      sr_arpreq_destroy(&sr->cache, req);
+    } else if (arp_hdr->ar_op == htons(arp_op_reply)) {  // Is ARP response
+      // Cache & send if match
+      struct sr_arpreq *req = sr_arpcache_insert(&sr->cache, arp_hdr->ar_sha, arp_hdr->ar_sip);
+      if (req) {  // Found in ARP request queue
+        struct sr_packet *waiting_pkt = req->packets;
+        while (waiting_pkt != NULL) {
+          sr_send_packet(sr, waiting_pkt->buf, waiting_pkt->len, waiting_pkt->iface);
+          waiting_pkt = waiting_pkt->next;
+        }
+        sr_arpreq_destroy(&sr->cache, req);
+      }
+      // No packet waiting for this ARP reply. Do nothing.
     }
-    // No packet waiting for this ARP reply. Do nothing.
-  }
     if_walker = if_walker->next;
   }
 }
