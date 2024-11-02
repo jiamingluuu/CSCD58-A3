@@ -180,21 +180,22 @@ void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len
   // Get the target IP address
   uint32_t target_ip = ntohl(arp_hdr->ar_tip);
 
+  struct sr_if *if_walker = sr->if_list;
   // Check if target IP is one of the router's interface IP
   struct sr_if *iface = sr_get_interface(sr, interface);
   if (!iface) {
     fprintf(stderr, "Interface not found.\n");
     return;
   }
-
+  while (if_walker != NULL) {
   if (arp_hdr->ar_op == htons(arp_op_request)) {  // Is ARP request
     if (target_ip == iface->ip) {                 // Match the target IP
-      send_arp_reply(sr, arp_hdr, interface);
+      send_arp_reply(sr, arp_hdr, interface);     // Respond
     }
   } else if (arp_hdr->ar_op == htons(arp_op_reply)) {  // Is ARP response
-    // Cache ARP response
+    // Cache & send if match
     struct sr_arpreq *req = sr_arpcache_insert(&sr->cache, arp_hdr->ar_sha, arp_hdr->ar_sip);
-    if (req) {
+    if (req) {  // Found in ARP request queue
       struct sr_packet *waiting_pkt = req->packets;
       while (waiting_pkt != NULL) {
         sr_send_packet(sr, waiting_pkt->buf, waiting_pkt->len, waiting_pkt->iface);
@@ -202,6 +203,9 @@ void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len
       }
       sr_arpreq_destroy(&sr->cache, req);
     }
+    // No packet waiting for this ARP reply. Do nothing.
+  }
+    if_walker = if_walker->next;
   }
 }
 
