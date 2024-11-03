@@ -20,36 +20,34 @@
 */
 void sr_arpcache_sweepreqs(struct sr_instance *sr) {
   struct sr_arpreq *req = sr->cache.requests;
-  while ( req != NULL) {
+  while (req != NULL) {
     handle_arpreq(sr, req);
     req = req->next;
   }
-  
 }
 
-/*
-[x] handle_arpreq
+/* [x] handle_arpreq
 @param sr the router instance
 @param req the arp request
-*/ 
+*/
 void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *req) {
   time_t now = time(NULL);
 
-  /* 1s timeout */ 
+  /* 1s timeout */
   if (difftime(now, req->sent) >= 1.0) {
-    /* 5 retries */ 
+    /* 5 retries */
     if (req->times_sent >= 5) {
       struct sr_packet *pkt = req->packets;
       while (pkt != NULL) {
         sr_send_icmp_t3(sr, pkt->buf, pkt->len, pkt->iface, 3, 1);
         pkt = pkt->next;
       }
-      /* destroy the request */ 
+      /* destroy the request */
       sr_arpreq_destroy(&sr->cache, req);
     } else {
-      /* resend the request */ 
-      uint8_t *arp_req = create_arp_request(sr, req->ip);
-      sr_send_packet(sr, arp_req, sizeof(struct sr_ethernet_hdr) + sizeof(struct sr_arp_hdr), req->packets->iface);
+      /* resend the request */
+      uint8_t *arp_req = create_arp_request(sr, req->ip, req->packets->iface);
+      sr_send_packet(sr, arp_req, ARP_PACKET_LEN, req->packets->iface);
       free(arp_req);
       req->sent = now;
       req->times_sent++;
@@ -57,53 +55,51 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *req) {
   }
 }
 
-/*
-[x] create_arp_request
+/* [x] create_arp_request
 @param sr the router instance
 @param ip the ip address of the destination
-*/ 
-uint8_t *create_arp_request(struct sr_instance *sr, uint32_t ip) {
-  /* ARP Packet Length = Ethernet Header Length + ARP Header Length */ 
-  unsigned int packet_len = sizeof(struct sr_ethernet_hdr) + sizeof(struct sr_arp_hdr);
+*/
+uint8_t *create_arp_request(struct sr_instance *sr, uint32_t ip, const char *iface) {
+  // ARP Packet Length = Ethernet Header Length + ARP Header Length
+  unsigned int packet_len = ARP_PACKET_LEN;
   uint8_t *packet = (uint8_t *)malloc(packet_len);
 
-  /* Allocate headers */ 
+  /* Allocate headers */
   struct sr_ethernet_hdr *eth_hdr = (struct sr_ethernet_hdr *)packet;
   struct sr_arp_hdr *arp_hdr = (struct sr_arp_hdr *)(packet + sizeof(struct sr_ethernet_hdr));
 
-  /* Fill Ethernet Header */ 
-  /* Broadcast MAC address */ 
+  /* Fill Ethernet Header */
+  /* Broadcast MAC address */
   memset(eth_hdr->ether_dhost, 0xff, ETHER_ADDR_LEN);
-  /* Source (sender) MAC address */ 
-  memcpy(eth_hdr->ether_shost, sr_get_interface(sr, req->packets->iface)->addr,
-         ETHER_ADDR_LEN);   
-   /* ARP */                   
-  eth_hdr->ether_type = htons(ethertype_arp); 
+  /* Source (sender) MAC address */
+  memcpy(eth_hdr->ether_shost, sr_get_interface(sr, req->packets->iface)->addr, ETHER_ADDR_LEN);
+  /* ARP */
+  eth_hdr->ether_type = htons(ethertype_arp);
 
-  /* Fill ARP Header */ 
-  /* Ethernet */ 
-  arp_hdr->ar_hrd = htons(arp_hrd_ethernet);  
-  /* IP */ 
-  arp_hdr->ar_pro = htons(ethertype_ip);    
-  /* MAC address length */  
+  /* Fill ARP Header */
+  /* Ethernet */
+  arp_hdr->ar_hrd = htons(arp_hrd_ethernet);
+  /* IP */
+  arp_hdr->ar_pro = htons(ethertype_ip);
+  /* MAC address length */
   arp_hdr->ar_hln = ETHER_ADDR_LEN;
-  /*IP address length*/            
-  arp_hdr->ar_pln = sizeof(uint32_t);      
-  /* ARP Request */   
-  arp_hdr->ar_op = htons(arp_op_request);     
+  /*IP address length*/
+  arp_hdr->ar_pln = sizeof(uint32_t);
+  /* ARP Request */
+  arp_hdr->ar_op = htons(arp_op_request);
 
-  /* Source MAC and IP address */ 
-  memcpy(arp_hdr->ar_sha, sr_get_interface(sr, req->packets->iface)->addr, ETHER_ADDR_LEN);
-  arp_hdr->ar_sip = sr_get_interface(sr, req->packets->iface)->ip;
+  /* Source MAC and IP address */
+  memcpy(arp_hdr->ar_sha, sr_get_interface(sr, iface)->addr, ETHER_ADDR_LEN);
+  arp_hdr->ar_sip = sr_get_interface(sr, iface)->ip;
 
-  /* Target MAC and IP address */ 
+  /* Target MAC and IP address */
   memset(arp_hdr->ar_tha, 0x00, ETHER_ADDR_LEN);
-  arp_hdr->ar_tip = target_ip;
+  arp_hdr->ar_tip = ip;
 
   return packet;
 }
 
-/* 
+/*
 [x] This function implements `sr_router.c:send_icmp_response`.
 [ ] Move this function to the right place.
 @param sr the router instance
@@ -112,25 +108,25 @@ uint8_t *create_arp_request(struct sr_instance *sr, uint32_t ip) {
 @param iface the interface to send the packet
 @param type the type of the ICMP packet
 @param code the code of the ICMP packet
- */ 
+ */
 void sr_send_icmp_t3(struct sr_instance *sr, uint8_t *packet, unsigned int len, const char *iface, uint8_t type,
                      uint8_t code) {
-  /* Get the Ethernet and IP headers */ 
+  /* Get the Ethernet and IP headers */
   struct sr_ethernet_hdr *eth_hdr = (struct sr_ethernet_hdr *)packet;
   struct sr_ip_hdr *ip_hdr = (struct sr_ip_hdr *)(packet + sizeof(struct sr_ethernet_hdr));
 
-  /* Allocate memory for the ICMP packet */ 
+  /* Allocate memory for the ICMP packet */
   unsigned int icmp_packet_len =
       sizeof(struct sr_ethernet_hdr) + sizeof(struct sr_ip_hdr) + sizeof(struct sr_icmp_t3_hdr);
   uint8_t *icmp_packet = (uint8_t *)malloc(icmp_packet_len);
 
-  /* Fill Ethernet Header */ 
+  /* Fill Ethernet Header */
   struct sr_ethernet_hdr *new_eth_hdr = (struct sr_ethernet_hdr *)icmp_packet;
   memcpy(new_eth_hdr->ether_dhost, eth_hdr->ether_shost, ETHER_ADDR_LEN);
   memcpy(new_eth_hdr->ether_shost, sr_get_interface(sr, iface)->addr, ETHER_ADDR_LEN);
   new_eth_hdr->ether_type = htons(ethertype_ip);
 
-  /* Fill IP Header */ 
+  /* Fill IP Header */
   struct sr_ip_hdr *new_ip_hdr = (struct sr_ip_hdr *)(icmp_packet + sizeof(struct sr_ethernet_hdr));
   new_ip_hdr->ip_v = 4;
   new_ip_hdr->ip_hl = sizeof(struct sr_ip_hdr) / 4;
