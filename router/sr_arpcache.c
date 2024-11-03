@@ -41,7 +41,7 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *req) {
       sr_arpreq_destroy(&sr->cache, req);
     } else {
       // resend the request
-      uint8_t *arp_req = create_arp_request(sr, req->ip);
+      uint8_t *arp_req = create_arp_request(sr, req->ip, req->packets->iface);
       sr_send_packet(sr, arp_req, ARP_PACKET_LEN, req->packets->iface);
       free(arp_req);
       req->sent = now;
@@ -53,9 +53,9 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *req) {
 // [x] create_arp_request
 // @param sr the router instance
 // @param ip the ip address of the destination
-uint8_t *create_arp_request(struct sr_instance *sr, uint32_t ip) {
+uint8_t *create_arp_request(struct sr_instance *sr, uint32_t ip, const char *iface) {
   // ARP Packet Length = Ethernet Header Length + ARP Header Length
-  unsigned int packet_len = sizeof(struct sr_ethernet_hdr) + sizeof(struct sr_arp_hdr);
+  unsigned int packet_len = ARP_PACKET_LEN;
   uint8_t *packet = (uint8_t *)malloc(packet_len);
 
   // Allocate headers
@@ -64,7 +64,7 @@ uint8_t *create_arp_request(struct sr_instance *sr, uint32_t ip) {
 
   // Fill Ethernet Header
   memset(eth_hdr->ether_dhost, 0xff, ETHER_ADDR_LEN);  // Broadcast MAC address
-  memcpy(eth_hdr->ether_shost, sr_get_interface(sr, req->packets->iface)->addr,
+  memcpy(eth_hdr->ether_shost, sr_get_interface(sr, iface)->addr,
          ETHER_ADDR_LEN);                      // Source (sender) MAC address
   eth_hdr->ether_type = htons(ethertype_arp);  // ARP
 
@@ -76,12 +76,12 @@ uint8_t *create_arp_request(struct sr_instance *sr, uint32_t ip) {
   arp_hdr->ar_op = htons(arp_op_request);     // ARP Request
 
   // Source MAC and IP address
-  memcpy(arp_hdr->ar_sha, sr_get_interface(sr, req->packets->iface)->addr, ETHER_ADDR_LEN);
-  arp_hdr->ar_sip = sr_get_interface(sr, req->packets->iface)->ip;
+  memcpy(arp_hdr->ar_sha, sr_get_interface(sr, iface)->addr, ETHER_ADDR_LEN);
+  arp_hdr->ar_sip = sr_get_interface(sr, iface)->ip;
 
   // Target MAC and IP address
   memset(arp_hdr->ar_tha, 0x00, ETHER_ADDR_LEN);
-  arp_hdr->ar_tip = target_ip;
+  arp_hdr->ar_tip = ip;
 
   return packet;
 }
