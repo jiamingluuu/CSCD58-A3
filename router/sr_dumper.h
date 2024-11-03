@@ -12,6 +12,7 @@
 #endif /* _DARWIN_ */
 
 #include <sys/time.h>
+#include <stdio.h>
 
 #define PCAP_VERSION_MAJOR 2
 #define PCAP_VERSION_MINOR 4

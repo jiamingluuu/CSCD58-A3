@@ -25,6 +25,9 @@
  *
  */
 
+#include <stdint.h>
+#include <netinet/in.h>
+
 #ifndef SR_UTILS_H
 #define SR_UTILS_H
 

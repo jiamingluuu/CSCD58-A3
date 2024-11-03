@@ -1,7 +1,7 @@
 #ifndef __LOG_H
 #define __LOG_H
 
-// #include <cstring>
+/* #include <cstring> */ 
 #include <string.h>
 #include <stdio.h>
 
@@ -33,4 +33,4 @@
             __LINE__, ##__VA_ARGS__);                                          \
   } while (0)
 
-#endif // __LOG_h
+#endif /* __LOG_h */ 

@@ -157,17 +157,23 @@ void sr_print_routing_entry(struct sr_rt* entry) {
 
 } /* -- sr_print_routing_entry -- */
 
+/*
+  Find the routing table entry with the longest matching prefix for a 
+  given destination IP address. 
+*/
 struct sr_rt* sr_longest_prefix_match(struct sr_instance* sr, uint32_t dest_ip) {
   struct st_rt* longest_match = NULL;
   uint32_t longest_match_len = 0;
 
-  for (struct sr_rt* rt = sr->routing_table; rt != NULL; rt = rt->next) {
+  struct sr_rt* rt = sr->routing_table; 
+  while (rt != NULL) {
     uint32_t curr_ip = rt->dest.s_addr;
     uint32_t curr_mask = rt->mask.s_addr;
     if ((dest_ip & curr_mask) == (curr_ip & curr_mask) && curr_mask > longest_match_len) {
       longest_match = rt;
       longest_match_len = curr_mask;
     }
+    rt = rt->next;
   }
   return longest_match;
 }
