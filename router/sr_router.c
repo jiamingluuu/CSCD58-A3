@@ -67,18 +67,13 @@ void sr_init(struct sr_instance *sr) {
  *
  *---------------------------------------------------------------------*/
 
-static void handle_ip_packet(struct sr_instance *sr, uint8_t *packet,
-                             unsigned int len, char *interface);
-static void handle_arp_packet(struct sr_instance *sr, uint8_t *packet,
-                              unsigned int len, char *interface);
-static struct sr_if *get_dst_interface(const struct sr_instance *sr,
-                                       const sr_ip_hdr_t *ip_hdr);
-static void send_icmp_response(struct sr_instance *sr, uint8_t *packet,
-                               unsigned int len, char *interface, uint8_t type,
+static void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface);
+static void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface);
+static struct sr_if *get_dst_interface(const struct sr_instance *sr, const sr_ip_hdr_t *ip_hdr);
+static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface, uint8_t type,
                                uint8_t code);
 
-void sr_handlepacket(struct sr_instance *sr, uint8_t *packet /* lent */,
-                     unsigned int len, char *interface /* lent */) {
+void sr_handlepacket(struct sr_instance *sr, uint8_t *packet /* lent */, unsigned int len, char *interface /* lent */) {
   uint16_t type;
 
   /* REQUIRES */
@@ -98,8 +93,7 @@ void sr_handlepacket(struct sr_instance *sr, uint8_t *packet /* lent */,
 } /* end sr_ForwardPacket */
 
 // TODO: Implements this function.
-void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
-                      char *interface) {
+void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface) {
   uint16_t header_checksum;
   sr_ip_hdr_t *ip_hdr;
   sr_icmp_hdr_t *icmp_hdr;
@@ -129,12 +123,9 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
     if (ip_protocol_icmp == ip_hdr->ip_p) {
       // The packet is an ICMP echo request, send an ICMP echo reply to the
       // sending host.
-      icmp_hdr = (sr_icmp_hdr_t *)(packet + sizeof(struct sr_ethernet_hdr) +
-                                   sizeof(sr_ip_hdr_t));
+      icmp_hdr = (sr_icmp_hdr_t *)(packet + sizeof(struct sr_ethernet_hdr) + sizeof(sr_ip_hdr_t));
       if (icmp_hdr->icmp_type == (uint8_t)8) {
-        header_checksum =
-            cksum((const void *)icmp_hdr,
-                  len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
+        header_checksum = cksum((const void *)icmp_hdr, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
         if (header_checksum != icmp_hdr->icmp_sum) {
           LOG_INFO("ICMP: Wrong header checksum.");
           return;
@@ -152,24 +143,56 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
     // Decrement the TTL by 1, and recompute the packet checksum over the
     // modified header.
 
+    ip_hdr->ip_ttl--;
+    if (ip_hdr->ip_ttl == 0) {
+      // time out
+      send_icmp_response(sr, packet, len, interface, 11, 0);
+      return;
+    }
+    ip_hdr->ip_sum = 0;
+    ip_hdr->ip_sum = cksum((const void *)ip_hdr, sizeof(sr_ip_hdr_t));
+
     // Find out which entry in the routing table has the longest prefix match
     // with the destination IP address.
+    struct sr_rt *longest_match_rt;
+    longest_match_rt = sr_longest_prefix_match(sr, ip_hdr->ip_dst);
+    if (longest_match_rt == NULL) {
+      // No match found, send an ICMP net unreachable message back to the sender.
+      send_icmp_response(sr, packet, len, interface, 3, 0);
+      return;
+    }
 
     // Check the ARP cache for the next-hop MAC address corresponding to the
-    // next-hop IP. If it’s there, send it. Otherwise, send an ARP request for
-    // the next-hop IP (if one hasn’t been sent within the last second), and add
-    // the packet to the queue of packets waiting on this ARP request.
-    // Obviously, this is a very simplified version of the forwarding process,
-    // and the low-level details follow. For example, if an error occurs in any
-    // of the above steps, you will have to send an ICMP message back to the
-    // sender notifying them of an error. You may also get an ARP request or
-    // reply, which has to interact with the ARP cache correctly.
+    // next-hop IP.
+    struct sr_arpentry *arp_entry;
+    arp_entry = sr_arpcache_lookup(&(sr->cache), longest_match_rt->gw.s_addr);
+    if (arp_entry) {
+      // If it’s there, forward the packet.
+      sr_ethernet_hdr_t *eth_hdr = (sr_ethernet_hdr_t *)packet;
+      memcpy(eth_hdr->ether_shost, sr_get_interface(sr, longest_match_rt->interface)->addr, ETHER_ADDR_LEN);
+      memcpy(eth_hdr->ether_dhost, arp_entry->mac, ETHER_ADDR_LEN);
+
+      int res = sr_send_packet(sr, packet, len, longest_match_rt->interface);
+      free(arp_entry);
+      if (res == -1) {
+        LOG_ERROR("Failed to send packet.");
+        return;
+      }
+
+    } else {
+      // Otherwise, send an ARP request for
+      // the next-hop IP (if one hasn’t been sent within the last second), and add
+      // the packet to the queue of packets waiting on this ARP request.
+      struct sr_arpreq *arp_req;
+      arp_req =
+          sr_arpcache_queuereq(&(sr->cache), longest_match_rt->gw.s_addr, packet, len, longest_match_rt->interface);
+      sr_handle_arpreq(sr, arp_req);
+    }
   }
 }
 
 // TODO(Wei Zheyuan): Implements this function.
-void handle_arp_packet(struct sr_instance *sr, uint8_t *packet,
-                       unsigned int len, char *interface) {
+void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface) {
   // if the packet is an ARP request
   // - send an ARP reply if the target IP address is one of your router’s IP
   //   addresses.
@@ -179,8 +202,7 @@ void handle_arp_packet(struct sr_instance *sr, uint8_t *packet,
   return;
 }
 
-struct sr_if *get_dst_interface(const struct sr_instance *sr,
-                                const sr_ip_hdr_t *ip_hdr) {
+struct sr_if *get_dst_interface(const struct sr_instance *sr, const sr_ip_hdr_t *ip_hdr) {
   struct sr_if *if_walker = sr->if_list;
   while (if_walker != NULL) {
     if (if_walker->ip == ip_hdr->ip_dst) {
@@ -192,8 +214,7 @@ struct sr_if *get_dst_interface(const struct sr_instance *sr,
 }
 
 // TODO: Implements this function.
-static void send_icmp_response(struct sr_instance *sr, uint8_t *packet,
-                               unsigned int len, char *interface, uint8_t type,
+static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface, uint8_t type,
                                uint8_t code) {
   return;
 }
