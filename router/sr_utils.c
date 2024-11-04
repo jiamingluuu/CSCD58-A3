@@ -1,10 +1,9 @@
 #include "sr_utils.h"
 
+#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <netinet/in.h>
-
 
 #include "sr_protocol.h"
 
@@ -27,6 +26,7 @@ uint16_t cksum(const void *_data, int len) {
 
 uint16_t ethertype(uint8_t *buf) {
   sr_ethernet_hdr_t *ehdr = (sr_ethernet_hdr_t *)buf;
+  LOG_DEBUG("%p", ehdr);
   return ntohs(ehdr->ether_type);
 }
 
