@@ -43,11 +43,9 @@
 #include "vnscommand.h"
 
 static void sr_log_packet(struct sr_instance*, uint8_t*, int);
-static int sr_arp_req_not_for_us(struct sr_instance* sr,
-                                 uint8_t* packet /* lent */, unsigned int len,
+static int sr_arp_req_not_for_us(struct sr_instance* sr, uint8_t* packet /* lent */, unsigned int len,
                                  char* interface /* lent */);
-int sr_read_from_server_expect(struct sr_instance* sr /* borrowed */,
-                               int expected_cmd);
+int sr_read_from_server_expect(struct sr_instance* sr /* borrowed */, int expected_cmd);
 
 /*-----------------------------------------------------------------------------
  * Method: sr_session_closed_help(..)
@@ -69,8 +67,7 @@ static void sr_session_closed_help() {}
  *  something other than zero on error
  *
  *---------------------------------------------------------------------------*/
-int sr_connect_to_server(struct sr_instance* sr, unsigned short port,
-                         char* server) {
+int sr_connect_to_server(struct sr_instance* sr, unsigned short port, char* server) {
   struct hostent* hp;
   c_open command;
   c_open_template ot;
@@ -106,16 +103,14 @@ int sr_connect_to_server(struct sr_instance* sr, unsigned short port,
   }
 
   /* attempt to connect to the server */
-  if (connect(sr->sockfd, (struct sockaddr*)&(sr->sr_addr),
-              sizeof(sr->sr_addr)) < 0) {
+  if (connect(sr->sockfd, (struct sockaddr*)&(sr->sr_addr), sizeof(sr->sr_addr)) < 0) {
     perror("connect(..):sr_client.c::sr_connect_to_server(..)");
     close(sr->sockfd);
     return -1;
   }
 
   /* wait for authentication to be completed (server sends the first message) */
-  if (sr_read_from_server_expect(sr, VNS_AUTH_REQUEST) != 1 ||
-      sr_read_from_server_expect(sr, VNS_AUTH_STATUS) != 1) {
+  if (sr_read_from_server_expect(sr, VNS_AUTH_REQUEST) != 1 || sr_read_from_server_expect(sr, VNS_AUTH_STATUS) != 1) {
     return -1; /* failed to receive expected message */
   }
 
@@ -172,8 +167,7 @@ int sr_handle_hwinfo(struct sr_instance* sr, c_hwinfo* hwinfo) {
   assert(sr);
   assert(hwinfo);
 
-  num_entries =
-      (ntohl(hwinfo->mLen) - (2 * sizeof(uint32_t))) / sizeof(c_hw_entry);
+  num_entries = (ntohl(hwinfo->mLen) - (2 * sizeof(uint32_t))) / sizeof(c_hw_entry);
 
   /* Debug("Received Hardware Info with %d entries\n",num_entries); */
 
@@ -213,7 +207,7 @@ int sr_handle_hwinfo(struct sr_instance* sr, c_hwinfo* hwinfo) {
       default:
         printf(" %d \n", ntohl(hwinfo->mHWInfo[i].mKey));
     } /* -- switch -- */
-  } /* -- for -- */
+  }   /* -- for -- */
 
   printf("Router interfaces:\n");
   sr_print_if_list(sr);
@@ -315,12 +309,9 @@ int sr_handle_auth_status(struct sr_instance* sr, c_auth_status* status) {
  *
  *---------------------------------------------------------------------------*/
 
-int sr_read_from_server(struct sr_instance* sr /* borrowed */) {
-  return sr_read_from_server_expect(sr, 0);
-}
+int sr_read_from_server(struct sr_instance* sr /* borrowed */) { return sr_read_from_server_expect(sr, 0); }
 
-int sr_read_from_server_expect(struct sr_instance* sr /* borrowed */,
-                               int expected_cmd) {
+int sr_read_from_server_expect(struct sr_instance* sr /* borrowed */, int expected_cmd) {
   int command, len;
   unsigned char* buf = 0;
   c_packet_ethernet_header* sr_pkt = 0;
@@ -339,8 +330,7 @@ int sr_read_from_server_expect(struct sr_instance* sr /* borrowed */,
   while (bytes_read < 4) {
     do {         /* -- just in case SIGALRM breaks recv -- */
       errno = 0; /* -- hacky glibc workaround -- */
-      if ((ret = recv(sr->sockfd, ((uint8_t*)&len) + bytes_read, 4 - bytes_read,
-                      0)) == -1) {
+      if ((ret = recv(sr->sockfd, ((uint8_t*)&len) + bytes_read, 4 - bytes_read, 0)) == -1) {
         if (errno == EINTR) {
           continue;
         }
@@ -374,8 +364,7 @@ int sr_read_from_server_expect(struct sr_instance* sr /* borrowed */,
   while (bytes_read < len - 4) {
     do {         /* -- just in case SIGALRM breaks recv -- */
       errno = 0; /* -- hacky glibc workaround -- */
-      if ((ret = read(sr->sockfd, buf + 4 + bytes_read,
-                      len - 4 - bytes_read)) == -1) {
+      if ((ret = read(sr->sockfd, buf + 4 + bytes_read, len - 4 - bytes_read)) == -1) {
         if (errno == EINTR) {
           continue;
         }
@@ -394,8 +383,7 @@ int sr_read_from_server_expect(struct sr_instance* sr /* borrowed */,
   /* make sure the command is what we expected if we were expecting something */
   if (expected_cmd && command != expected_cmd) {
     if (command != VNSCLOSE) { /* VNSCLOSE is always ok */
-      fprintf(stderr, "Error: expected command %d but got %d\n", expected_cmd,
-              command);
+      fprintf(stderr, "Error: expected command %d but got %d\n", expected_cmd, command);
       return -1;
     }
   }
@@ -409,20 +397,17 @@ int sr_read_from_server_expect(struct sr_instance* sr /* borrowed */,
 
       /* -- check if it is an ARP to another router if so drop   -- */
       if (sr_arp_req_not_for_us(sr, (buf + sizeof(c_packet_header)),
-                                len - sizeof(c_packet_ethernet_header) +
-                                    sizeof(struct sr_ethernet_hdr),
+                                len - sizeof(c_packet_ethernet_header) + sizeof(struct sr_ethernet_hdr),
                                 (char*)(buf + sizeof(c_base)))) {
         break;
       }
 
       /* -- log packet -- */
-      sr_log_packet(sr, buf + sizeof(c_packet_header),
-                    ntohl(sr_pkt->mLen) - sizeof(c_packet_header));
+      sr_log_packet(sr, buf + sizeof(c_packet_header), ntohl(sr_pkt->mLen) - sizeof(c_packet_header));
 
       /* -- pass to router, student's code should take over here -- */
       sr_handlepacket(sr, (buf + sizeof(c_packet_header)),
-                      len - sizeof(c_packet_ethernet_header) +
-                          sizeof(struct sr_ethernet_hdr),
+                      len - sizeof(c_packet_ethernet_header) + sizeof(struct sr_ethernet_hdr),
                       (char*)(buf + sizeof(c_base)));
 
       break;
@@ -541,8 +526,7 @@ static int sr_ether_addrs_match_interface(struct sr_instance* sr, /* borrowed */
  *
  *---------------------------------------------------------------------------*/
 
-int sr_send_packet(struct sr_instance* sr /* borrowed */,
-                   uint8_t* buf /* borrowed */, unsigned int len,
+int sr_send_packet(struct sr_instance* sr /* borrowed */, uint8_t* buf /* borrowed */, unsigned int len,
                    const char* iface /* borrowed */) {
   c_packet_header* sr_pkt;
   unsigned int total_len = len + (sizeof(c_packet_header));
@@ -551,6 +535,7 @@ int sr_send_packet(struct sr_instance* sr /* borrowed */,
   assert(sr);
   assert(buf);
   assert(iface);
+  print_hdrs(buf, len);
 
   /* don't waste my time ... */
   if (len < sizeof(struct sr_ethernet_hdr)) {
@@ -619,8 +604,8 @@ void sr_log_packet(struct sr_instance* sr, uint8_t* buf, int len) {
  *
  *---------------------------------------------------------------------------*/
 
-int sr_arp_req_not_for_us(struct sr_instance* sr, uint8_t* packet /* lent */,
-                          unsigned int len, char* interface /* lent */) {
+int sr_arp_req_not_for_us(struct sr_instance* sr, uint8_t* packet /* lent */, unsigned int len,
+                          char* interface /* lent */) {
   struct sr_if* iface = sr_get_interface(sr, interface);
   struct sr_ethernet_hdr* e_hdr = 0;
   struct sr_arp_hdr* a_hdr = 0;
@@ -634,8 +619,8 @@ int sr_arp_req_not_for_us(struct sr_instance* sr, uint8_t* packet /* lent */,
   e_hdr = (struct sr_ethernet_hdr*)packet;
   a_hdr = (struct sr_arp_hdr*)(packet + sizeof(struct sr_ethernet_hdr));
 
-  if ((e_hdr->ether_type == htons(ethertype_arp)) &&
-      (a_hdr->ar_op == htons(arp_op_request)) && (a_hdr->ar_tip != iface->ip)) {
+  if ((e_hdr->ether_type == htons(ethertype_arp)) && (a_hdr->ar_op == htons(arp_op_request)) &&
+      (a_hdr->ar_tip != iface->ip)) {
     return 1;
   }
 
