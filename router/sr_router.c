@@ -259,11 +259,11 @@ void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len
   while (if_walker != NULL) {
     if (arp_hdr->ar_op == htons(arp_op_request)) { /* Is ARP request */
       printf("Received ARP request.\n");
-      if (target_ip == iface->ip) { /* Match the target IP */
+      if (target_ip == if_walker->ip) { /* Match the target IP */
         printf("Target IP matches the interface IP.\n");
         send_arp_reply(sr, arp_hdr, interface); /* Respond */
       } else {
-        printf("[IP not match] Target IP: %d, Interface IP: %d\n", target_ip, iface->ip);
+        printf("[IP not match] Target IP: %d, Interface IP: %d\n", target_ip, if_walker->ip);
       }
     } else if (arp_hdr->ar_op == htons(arp_op_reply)) { /* Is ARP response */
       printf("Received ARP reply.\n");
