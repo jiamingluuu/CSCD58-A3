@@ -89,10 +89,10 @@ void sr_handlepacket(struct sr_instance *sr, uint8_t *packet /* lent */, unsigne
   printf("*** -> Received packet of length %d, pointer: %p\n", len, packet);
   type = ethertype(packet);
   printf("Received packet type: %d\n", type);
-  if (type == (ethertype_ip)) {
+  if (type == ethertype_ip) {
     printf("Received packet is an IP packet.\n");
     handle_ip_packet(sr, packet, len, interface);
-  } else if (type == (ethertype_arp)) {
+  } else if (type == ethertype_arp) {
     printf("Received packet is an ARP packet.\n");
     handle_arp_packet(sr, packet, len, interface);
   } else {
@@ -287,6 +287,8 @@ void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len
   @param interface the interface to send the ARP reply
 */
 void send_arp_reply(struct sr_instance *sr, sr_arp_hdr_t *arp_hdr, char *interface) {
+  printf("Sending ARP reply.\n");
+
   /* Allocate memory for the ARP reply */
   unsigned int arp_reply_len = sizeof(struct sr_ethernet_hdr) + sizeof(struct sr_arp_hdr);
   uint8_t *arp_reply = (uint8_t *)malloc(arp_reply_len);
@@ -322,6 +324,8 @@ void send_arp_reply(struct sr_instance *sr, sr_arp_hdr_t *arp_hdr, char *interfa
 
   /* Free the memory */
   free(arp_reply);
+
+  printf("ARP reply sent.\n");
 }
 
 struct sr_if *get_dst_interface(const struct sr_instance *sr, const sr_ip_hdr_t *ip_hdr) {
