@@ -90,16 +90,16 @@ void sr_handlepacket(struct sr_instance *sr, uint8_t *packet /* lent */, unsigne
   type = ethertype(packet);
   printf("Received packet type: %d", type);
   if (type == ntohs(ethertype_ip)) {
-    printf("Received packet is an IP packet.");
+    printf("Received packet is an IP packet.\n");
     handle_ip_packet(sr, packet, len, interface);
   } else if (type == ntohs(ethertype_arp)) {
-    printf("Received packet is an ARP packet.");
+    printf("Received packet is an ARP packet.\n");
     handle_arp_packet(sr, packet, len, interface);
   } else {
     /* Ignored. */
-    printf("Received packet is not an IP or ARP packet.");
+    printf("Received packet is not an IP or ARP packet.\n");
   }
-  printf("Packet handled.");
+  printf("Packet handled.\n");
 } /* end sr_ForwardPacket */
 
 /* TODO: Implements this function. */
@@ -117,13 +117,13 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
 
   /* Sanity-check the packet (meets minimum length and has correct checksum). */
   if (len < sizeof(struct sr_ethernet_hdr) + sizeof(sr_ip_hdr_t)) {
-    printf("IP packet does not meet expected length.");
+    printf("IP packet does not meet expected length.\n");
     return;
   }
   ip_hdr = (sr_ip_hdr_t *)(packet + sizeof(struct sr_ethernet_hdr));
   header_checksum = ip_hdr->ip_sum;
   if (header_checksum != cksum((const void *)ip_hdr, sizeof(sr_ip_hdr_t))) {
-    printf("IP: Wrong header checksum.");
+    printf("IP: Wrong header checksum.\n");
     return;
   }
 
@@ -141,11 +141,11 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
       header_checksum = cksum(icmp_hdr, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
 
       if (header_checksum != icmp_hdr->icmp_sum) {
-        printf("ICMP: Wrong header checksum.");
+        printf("ICMP: Wrong header checksum.\n");
         return;
       }
       if (icmp_hdr->icmp_type != (uint8_t)8) {
-        printf("Received packet is not an ICMP echo request.");
+        printf("Received packet is not an ICMP echo request.\n");
         return;
       }
       send_icmp_response(sr, packet, len, interface, 0, 0, ip_interface);
@@ -165,7 +165,7 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
       Decrement the TTL by 1, and recompute the packet checksum over the
       modified header.
      */
-    printf("Decrementing TTL by 1.");
+    printf("Decrementing TTL by 1.\n");
     ip_hdr->ip_ttl--;
     if (ip_hdr->ip_ttl == 0) {
       /* time out */
@@ -179,7 +179,7 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
       Find out which entry in the routing table has the longest prefix match
       with the destination IP address.
     */
-    printf("Finding the longest prefix match.");
+    printf("Finding the longest prefix match.\n");
     struct sr_rt *longest_match_rt;
     longest_match_rt = sr_longest_prefix_match(sr, ip_hdr->ip_dst);
     if (longest_match_rt == NULL) {
@@ -193,12 +193,12 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
       Check the ARP cache for the next-hop MAC address corresponding to the
       next-hop IP.
     */
-    printf("Checking the ARP cache.");
+    printf("Checking the ARP cache.\n");
     struct sr_arpentry *arp_entry;
     arp_entry = sr_arpcache_lookup(&(sr->cache), longest_match_rt->gw.s_addr);
     if (arp_entry) {
       /* If it’s there, forward the packet. */
-      printf("ARP entry found. Forward the packet.");
+      printf("ARP entry found. Forward the packet.\n");
       sr_ethernet_hdr_t *eth_hdr = (sr_ethernet_hdr_t *)packet;
       memcpy(eth_hdr->ether_shost, sr_get_interface(sr, longest_match_rt->interface)->addr, ETHER_ADDR_LEN);
       memcpy(eth_hdr->ether_dhost, arp_entry->mac, ETHER_ADDR_LEN);
@@ -206,7 +206,7 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
       int res = sr_send_packet(sr, packet, len, longest_match_rt->interface);
       free(arp_entry);
       if (res == -1) {
-        printf("Failed to send packet.");
+        printf("Failed to send packet.\n");
         return;
       }
 
@@ -216,7 +216,7 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
         the next-hop IP (if one hasn’t been sent within the last second), and
         add the packet to the queue of packets waiting on this ARP request.
       */
-      printf("ARP entry not found. Send an ARP request.");
+      printf("ARP entry not found. Send an ARP request.\n");
       struct sr_arpreq *arp_req;
       arp_req =
           sr_arpcache_queuereq(&(sr->cache), longest_match_rt->gw.s_addr, packet, len, longest_match_rt->interface);
@@ -242,7 +242,7 @@ void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len
 
   /* Sanity check */
   if (len < sizeof(struct sr_ethernet_hdr) + sizeof(struct sr_arp_hdr)) {
-    printf("ARP packet length is less than minimum required length.");
+    printf("ARP packet length is less than minimum required length.\n");
     return;
   }
 
@@ -253,17 +253,17 @@ void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len
   /* Check if target IP is one of the router's interface IP */
   struct sr_if *iface = sr_get_interface(sr, interface);
   if (!iface) {
-    printf("Interface not found.");
+    printf("Interface not found.\n");
     return;
   }
   while (if_walker != NULL) {
     if (arp_hdr->ar_op == htons(arp_op_request)) { /* Is ARP request */
-      printf("Received ARP request.");
+      printf("Received ARP request.\n");
       if (target_ip == iface->ip) {             /* Match the target IP */
         send_arp_reply(sr, arp_hdr, interface); /* Respond */
       }
     } else if (arp_hdr->ar_op == htons(arp_op_reply)) { /* Is ARP response */
-      printf("Received ARP reply.");
+      printf("Received ARP reply.\n");
       /* Cache & send if match */
       struct sr_arpreq *req = sr_arpcache_insert(&sr->cache, arp_hdr->ar_sha, arp_hdr->ar_sip);
       if (req) { /* Found in ARP request queue */
