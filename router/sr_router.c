@@ -88,11 +88,11 @@ void sr_handlepacket(struct sr_instance *sr, uint8_t *packet /* lent */, unsigne
 
   printf("*** -> Received packet of length %d, pointer: %p\n", len, packet);
   type = ethertype(packet);
-  printf("Received packet type: %d", type);
-  if (type == ntohs(ethertype_ip)) {
+  printf("Received packet type: %d\n", type);
+  if (type == (ethertype_ip)) {
     printf("Received packet is an IP packet.\n");
     handle_ip_packet(sr, packet, len, interface);
-  } else if (type == ntohs(ethertype_arp)) {
+  } else if (type == (ethertype_arp)) {
     printf("Received packet is an ARP packet.\n");
     handle_arp_packet(sr, packet, len, interface);
   } else {
