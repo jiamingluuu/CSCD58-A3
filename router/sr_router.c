@@ -87,6 +87,7 @@ void sr_handlepacket(struct sr_instance *sr, uint8_t *packet /* lent */, unsigne
   assert(interface);
 
   printf("*** -> Received packet of length %d \n", len);
+  LOG_DEBUG("packet pointer: %p", packet);
   type = ethertype(packet);
   LOG_DEBUG("Received packet type: %d", type);
   if (type == ntohs(ethertype_ip)) {
