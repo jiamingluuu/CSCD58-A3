@@ -110,6 +110,7 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
   struct sr_if *ip_interface, *eth_interface;
   uint8_t protocol;
 
+
   /* REQUIRES */
   assert(sr);
   assert(packet);
@@ -122,6 +123,7 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
   }
   ip_hdr = (sr_ip_hdr_t *)(packet + sizeof(struct sr_ethernet_hdr));
   header_checksum = ip_hdr->ip_sum;
+  ip_hdr->ip_sum = 0;
   if (header_checksum != cksum((const void *)ip_hdr, sizeof(sr_ip_hdr_t))) {
     printf("IP: Wrong header checksum.\n");
     return;
@@ -129,6 +131,7 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
 
   /* If the packet is sending to one of our interface. */
   ip_interface = get_dst_interface(sr, ip_hdr);
+  printf("#####################\n");
   if (ip_interface != NULL) {
     struct sr_if *iface = sr_get_interface(sr, interface);
     protocol = ip_protocol(packet);
@@ -344,6 +347,7 @@ struct sr_if *get_dst_interface(const struct sr_instance *sr, const sr_ip_hdr_t 
 
 static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface, uint8_t type,
                                uint8_t code, struct sr_if *ip_interface) {
+  printf("## sending icmp response.\n");
   uint8_t *response;
   unsigned int response_len;
   sr_ip_hdr_t *request_ip_hdr, *response_ip_hdr;
