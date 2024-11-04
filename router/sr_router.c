@@ -247,7 +247,7 @@ void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len
   }
 
   /* Get the target IP address */
-  uint32_t target_ip = ntohl(arp_hdr->ar_tip);
+  uint32_t target_ip = (arp_hdr->ar_tip);
 
   struct sr_if *if_walker = sr->if_list;
   /* Check if target IP is one of the router's interface IP */
