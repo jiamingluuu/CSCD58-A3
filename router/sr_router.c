@@ -151,6 +151,7 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
         elsewhere should be forwarded using your normal forwarding logic.
         send_icmp_response(sr, packet, len, interface, 3, 3, ip_interface);
       */ 
+      send_icmp_response(sr, packet, len, interface, 3, 3, ip_interface);
     }
   } else {
     /* 
@@ -213,7 +214,7 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
       struct sr_arpreq *arp_req;
       arp_req =
           sr_arpcache_queuereq(&(sr->cache), longest_match_rt->gw.s_addr, packet, len, longest_match_rt->interface);
-      sr_handle_arpreq(sr, arp_req);
+      handle_arpreq(sr, arp_req);
     }
   }
 }
