@@ -60,7 +60,7 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *req) {
 @param ip the ip address of the destination
 */
 uint8_t *create_arp_request(struct sr_instance *sr, uint32_t ip, const char *iface) {
-  // ARP Packet Length = Ethernet Header Length + ARP Header Length
+  /* ARP Packet Length = Ethernet Header Length + ARP Header Length */ 
   unsigned int packet_len = ARP_PACKET_LEN;
   uint8_t *packet = (uint8_t *)malloc(packet_len);
 
