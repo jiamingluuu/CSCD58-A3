@@ -88,6 +88,7 @@ void sr_handlepacket(struct sr_instance *sr, uint8_t *packet /* lent */, unsigne
 
   printf("*** -> Received packet of length %d, pointer: %p\n", len, packet);
   printf("*** -> Received packet of length %d, pointer: %p\n", len, packet);
+  LOG_DEBUG("Received packet of length %d, pointer: %p", len, packet);
   printf("*** -> Received packet of length %d, pointer: %p\n", len, packet);
   printf("*** -> Received packet of length %d, pointer: %p\n", len, packet);
   type = ethertype(packet);
