@@ -26,9 +26,9 @@ uint16_t cksum(const void *_data, int len) {
 }
 
 uint16_t ethertype(uint8_t *buf) {
-  LOG_DEBUG("%p", buf);
+  printf("%p", buf);
   sr_ethernet_hdr_t *ehdr = (sr_ethernet_hdr_t *)buf;
-  LOG_DEBUG("%p", ehdr);
+  printf("%p", ehdr);
   return ntohs(ehdr->ether_type);
 }
 
