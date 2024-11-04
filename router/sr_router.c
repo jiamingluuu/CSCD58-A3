@@ -89,11 +89,14 @@ void sr_handlepacket(struct sr_instance *sr, uint8_t *packet /* lent */, unsigne
   printf("*** -> Received packet of length %d \n", len);
   type = ethertype(packet);
   if (type == ntohs(ethertype_ip)) {
+    LOG_DEBUG("Received packet is an IP packet.");
     handle_ip_packet(sr, packet, len, interface);
-  } else if (type == ethertype_arp) {
+  } else if (type == ntohs(ethertype_arp)) {
+    LOG_DEBUG("Received packet is an ARP packet.");
     handle_arp_packet(sr, packet, len, interface);
   } else {
     /* Ignored. */
+    LOG_DEBUG("Received packet is not an IP or ARP packet.");
   }
   LOG_DEBUG("Packet handled.");
 } /* end sr_ForwardPacket */
