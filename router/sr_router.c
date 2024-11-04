@@ -121,7 +121,7 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
 
   /* Sanity-check the packet (meets minimum length and has correct checksum). */
   if (len < sizeof(struct sr_ethernet_hdr) + sizeof(sr_ip_hdr_t)) {
-    LOG_DEBUG("IP packet does not meet expected length.")
+    LOG_DEBUG("IP packet does not meet expected length.");
     return;
   }
   ip_hdr = (sr_ip_hdr_t *)(packet + sizeof(struct sr_ethernet_hdr));
