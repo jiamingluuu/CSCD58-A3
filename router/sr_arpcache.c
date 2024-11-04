@@ -72,7 +72,7 @@ uint8_t *create_arp_request(struct sr_instance *sr, uint32_t ip, const char *ifa
   /* Broadcast MAC address */
   memset(eth_hdr->ether_dhost, 0xff, ETHER_ADDR_LEN);
   /* Source (sender) MAC address */
-  memcpy(eth_hdr->ether_shost, sr_get_interface(sr, req->packets->iface)->addr, ETHER_ADDR_LEN);
+  memcpy(eth_hdr->ether_shost, sr_get_interface(sr, iface)->addr, ETHER_ADDR_LEN);
   /* ARP */
   eth_hdr->ether_type = htons(ethertype_arp);
 
