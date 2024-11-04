@@ -8,8 +8,8 @@
 #include <string.h>
 
 #ifdef DEBUG
-#define LOG_DEBUG(format, ...) \
-  fprintf(stdout, "DEBUG [%s:%d] " format "\n", strrchr(__FILE__, '/') + 1, __LINE__, ##__VA_ARGS__)
+#define LOG_DEBUG(format, ...) printf("DEBUG [%s:%d] " format "\n");
+// fprintf(stdout, "DEBUG [%s:%d] " format "\n", strrchr(__FILE__, '/') + 1, __LINE__, ##__VA_ARGS__)
 #else
 #define LOG_DEBUG(format, ...)
 #endif
