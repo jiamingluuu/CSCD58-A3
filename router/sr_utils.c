@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "log.h"
 #include "sr_protocol.h"
 
 uint16_t cksum(const void *_data, int len) {
