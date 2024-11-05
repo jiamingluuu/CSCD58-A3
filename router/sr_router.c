@@ -417,6 +417,7 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
   printf("response_icmp_hdr icmp_sum: %d\n", response_icmp_hdr->icmp_sum);
 
   /* IP */
+  printf("## copying ip header\n");
   if (ip_interface == NULL) {
     ip_src = out_interface->ip;
   } else {
@@ -432,9 +433,14 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
   response_ip_hdr->ip_sum = cksum(response_ip_hdr, sizeof(sr_ip_hdr_t));
 
   /* ETH */
+  printf("## copying eth header\n");
   memcpy(response_eth_hdr->ether_shost, out_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
   memcpy(response_eth_hdr->ether_dhost, request_eth_hdr->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
   response_eth_hdr->ether_type = htons(ethertype_ip);
+
+  printf("## sending packet\n");
   sr_send_packet(sr, response, response_len, interface);
+
+  printf("## free\n");
   free(response);
 }
