@@ -436,7 +436,7 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
     ((uint8_t *)response_ip_hdr)[i] = ((uint8_t *)request_ip_hdr)[i];
   }
 
-  // memcpy(response_ip_hdr, request_ip_hdr, sizeof(sr_ip_hdr_t));
+  /* memcpy(response_ip_hdr, request_ip_hdr, sizeof(sr_ip_hdr_t)); */
   response_ip_hdr->ip_ttl = INIT_TTL;
   response_ip_hdr->ip_p = ip_protocol_icmp;
   response_ip_hdr->ip_src = ip_src;
