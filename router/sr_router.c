@@ -401,10 +401,6 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
     response_icmp_hdr->icmp_sum = cksum(response_icmp_hdr, sizeof(sr_icmp_t3_hdr_t));
   }
 
-  response_icmp_hdr->icmp_code = code;
-  response_icmp_hdr->icmp_type = type;
-  response_icmp_hdr->icmp_sum = 0;
-
   if (type == 0) {
     response_icmp_hdr->icmp_sum = cksum(response_icmp_hdr, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
   } else {
