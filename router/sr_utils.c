@@ -1,9 +1,11 @@
 #include "sr_utils.h"
 
+#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "log.h"
 #include "sr_protocol.h"
 
 uint16_t cksum(const void *_data, int len) {
@@ -30,7 +32,7 @@ uint16_t ethertype(uint8_t *buf) {
 
 uint8_t ip_protocol(uint8_t *buf) {
   sr_ip_hdr_t *iphdr = (sr_ip_hdr_t *)(buf);
-  return iphdr->ip_p;
+  return (iphdr->ip_p);
 }
 
 /* Prints out formatted Ethernet address, e.g. 00:11:22:33:44:55 */

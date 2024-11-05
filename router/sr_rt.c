@@ -49,21 +49,15 @@ int sr_load_rt(struct sr_instance* sr, const char* filename) {
   while (fgets(line, BUFSIZ, fp) != 0) {
     sscanf(line, "%s %s %s %s", dest, gw, mask, iface);
     if (inet_aton(dest, &dest_addr) == 0) {
-      fprintf(stderr,
-              "Error loading routing table, cannot convert %s to valid IP\n",
-              dest);
+      fprintf(stderr, "Error loading routing table, cannot convert %s to valid IP\n", dest);
       return -1;
     }
     if (inet_aton(gw, &gw_addr) == 0) {
-      fprintf(stderr,
-              "Error loading routing table, cannot convert %s to valid IP\n",
-              gw);
+      fprintf(stderr, "Error loading routing table, cannot convert %s to valid IP\n", gw);
       return -1;
     }
     if (inet_aton(mask, &mask_addr) == 0) {
-      fprintf(stderr,
-              "Error loading routing table, cannot convert %s to valid IP\n",
-              mask);
+      fprintf(stderr, "Error loading routing table, cannot convert %s to valid IP\n", mask);
       return -1;
     }
     if (clear_routing_table == 0) {
@@ -82,8 +76,8 @@ int sr_load_rt(struct sr_instance* sr, const char* filename) {
  *
  *---------------------------------------------------------------------*/
 
-void sr_add_rt_entry(struct sr_instance* sr, struct in_addr dest,
-                     struct in_addr gw, struct in_addr mask, char* if_name) {
+void sr_add_rt_entry(struct sr_instance* sr, struct in_addr dest, struct in_addr gw, struct in_addr mask,
+                     char* if_name) {
   struct sr_rt* rt_walker = 0;
 
   /* -- REQUIRES -- */
@@ -162,3 +156,24 @@ void sr_print_routing_entry(struct sr_rt* entry) {
   printf("%s\n", entry->interface);
 
 } /* -- sr_print_routing_entry -- */
+
+/*
+  Find the routing table entry with the longest matching prefix for a 
+  given destination IP address. 
+*/
+struct sr_rt* sr_longest_prefix_match(struct sr_instance* sr, uint32_t dest_ip) {
+  struct st_rt* longest_match = NULL;
+  uint32_t longest_match_len = 0;
+
+  struct sr_rt* rt = sr->routing_table; 
+  while (rt != NULL) {
+    uint32_t curr_ip = rt->dest.s_addr;
+    uint32_t curr_mask = rt->mask.s_addr;
+    if ((dest_ip & curr_mask) == (curr_ip & curr_mask) && curr_mask > longest_match_len) {
+      longest_match = rt;
+      longest_match_len = curr_mask;
+    }
+    rt = rt->next;
+  }
+  return longest_match;
+}
