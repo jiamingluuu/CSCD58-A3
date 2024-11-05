@@ -376,7 +376,7 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
   printf("## sending icmp response.type: %d\n", type);
   /* ICMP */
   if (type == 0) {
-    // Fix: use `sr_icmp_hdr_t` in type 0
+    /* Fix: use `sr_icmp_hdr_t` in type 0 */
     sr_icmp_hdr_t *response_icmp_hdr = (sr_icmp_hdr_t *)(response + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
     memcpy(response_icmp_hdr, packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t),
            response_len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
