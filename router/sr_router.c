@@ -131,7 +131,7 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
   printf("#####################\n");
   if (ip_interface != NULL) {
     struct sr_if *iface = sr_get_interface(sr, interface);
-    protocol = ip_protocol(packet);
+    protocol = ip_protocol(ip_hdr);
     printf("Iface found, protocol: %d\n", protocol);
     /* TODO(Lu Jiaming): Finish the if statement block. */
     if (protocol == ip_protocol_icmp) {
