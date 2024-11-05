@@ -423,7 +423,7 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
   } else {
     ip_src = ip_interface->ip;
   }
-  response_ip_hdr = (sr_ip_hdr_t *)(response + sizeof(sr_ethernet_hdr_t));
+  response_ip_hdr = (sr_ip_hdr_t *)(response + sizeof(sr_ethernet_hdr_t)); /* Missing initialization */
   memcpy(response_ip_hdr, request_ip_hdr, sizeof(sr_ip_hdr_t));
   response_ip_hdr->ip_ttl = INIT_TTL;
   response_ip_hdr->ip_p = ip_protocol_icmp;
@@ -435,7 +435,7 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
 
   /* ETH */
   printf("## copying eth header\n");
-  response_eth_hdr = (sr_ethernet_hdr_t *)response;
+  response_eth_hdr = (sr_ethernet_hdr_t *)response; /* Missing initialization */
   memcpy(response_eth_hdr->ether_shost, out_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
   memcpy(response_eth_hdr->ether_dhost, request_eth_hdr->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
   response_eth_hdr->ether_type = htons(ethertype_ip);
