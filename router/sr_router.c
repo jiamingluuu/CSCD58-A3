@@ -131,7 +131,7 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
   printf("#####################\n");
   if (ip_interface != NULL) {
     struct sr_if *iface = sr_get_interface(sr, interface);
-    protocol = ip_protocol(ip_hdr);
+    protocol = ip_protocol(ip_hdr); /* Wrong pointer fixed */
     printf("Iface found, protocol: %d\n", protocol);
     /* TODO(Lu Jiaming): Finish the if statement block. */
     if (protocol == ip_protocol_icmp) {
@@ -139,7 +139,8 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
         sending host.
        */
       printf("protocol is ICMP\n");
-      icmp_hdr = (sr_icmp_hdr_t *)(packet + sizeof(struct sr_ethernet_hdr) + sizeof(sr_ip_hdr_t));
+      /* Wrong pointer fixed below */
+      icmp_hdr = (sr_icmp_hdr_t *)(ip_hdr + sizeof(struct sr_ethernet_hdr) + sizeof(sr_ip_hdr_t));
       header_checksum = cksum(icmp_hdr, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
 
       if (header_checksum != icmp_hdr->icmp_sum) {
