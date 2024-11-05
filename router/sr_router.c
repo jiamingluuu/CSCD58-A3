@@ -352,6 +352,7 @@ struct sr_if *get_dst_interface(const struct sr_instance *sr, const sr_ip_hdr_t 
 
 static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface, uint8_t type,
                                uint8_t code, struct sr_if *ip_interface) {
+  printf("## sending icmp response\n");
   uint8_t *response;
   unsigned int response_len;
   sr_ip_hdr_t *request_ip_hdr, *response_ip_hdr;
