@@ -367,9 +367,13 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
   /* Sanity-check the packet (meets minimum length). */
   if (len < sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t)) {
     fprintf(stderr, "Error: Packet length is too small for IP header.\n");
-    free(response);
     return;
   }
+  printf("Size of sr_ethernet_hdr_t: %zu\n", sizeof(sr_ethernet_hdr_t));
+  printf("Size of sr_ip_hdr_t: %zu\n", sizeof(sr_ip_hdr_t));
+  printf("Size of sr_icmp_t3_hdr_t: %zu\n", sizeof(sr_icmp_t3_hdr_t));
+  printf("Offset of data in sr_icmp_t3_hdr_t: %zu\n", offsetof(sr_icmp_t3_hdr_t, data));
+
   request_eth_hdr = (sr_ethernet_hdr_t *)packet;
   request_ip_hdr = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
 
@@ -398,13 +402,28 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
   } else {
     sr_icmp_t3_hdr_t *response_icmp_hdr =
         (sr_icmp_t3_hdr_t *)(response + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+    response_icmp_hdr->next_mtu = 0;
+    if ((uint8_t *)response_icmp_hdr + sizeof(sr_icmp_t3_hdr_t) > response + response_len) {
+      fprintf(stderr, "Error: response_icmp_hdr exceeds response buffer.\n");
+      free(response);
+      return;
+    }
     response_icmp_hdr->icmp_type = type;
     response_icmp_hdr->icmp_code = code;
     response_icmp_hdr->unused = 0;
-    response_icmp_hdr->next_mtu = 0;
 
-    printf("request_ip_hdr address: %p\n", (void *)request_ip_hdr);
-    printf("response_icmp_hdr->data address: %p\n", (void *)response_icmp_hdr->data);
+    unsigned int ip_header_and_data_len = len - sizeof(sr_ethernet_hdr_t);
+    unsigned int copy_len = ip_header_and_data_len > ICMP_DATA_SIZE ? ICMP_DATA_SIZE : ip_header_and_data_len;
+    if (!request_ip_hdr) {
+      fprintf(stderr, "Error: request_ip_hdr is NULL.\n");
+      free(response);
+      return;
+    }
+    if ((uint8_t *)response_icmp_hdr->data + copy_len > response + response_len) {
+      fprintf(stderr, "Error: response_icmp_hdr->data exceeds response buffer.\n");
+      free(response);
+      return;
+    }
 
     memcpy(response_icmp_hdr->data, request_ip_hdr, ICMP_DATA_SIZE);
     response_icmp_hdr->icmp_sum = 0;
