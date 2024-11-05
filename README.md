@@ -4,7 +4,7 @@
 |-------------|----------------|------------------------------|
 | Jiaming Lu  | 1008494620     | jiaming.lu@mail.utoronto.ca  |
 | Zheyuan Wei | 1007626133     | zheyuan.wei@mail.utoronto.ca |
-| Yawen Zhang | 1006739772     | weng.zhang@mail.utoronto.ca  |
+| Yawen Zhang | 1006739772     | yaweng.zhang@mail.utoronto.ca  |
 
 # Contributions
 - Jiaming Lu: Worked on handling IP packet with Yawen, mainly focused on the ICMP protocol handling in function `handle_ip_packet` and the relative helper funcitons such as `send_icmp_response` and `get_dst_interface`, as well as debug and test works for the whole router project.
