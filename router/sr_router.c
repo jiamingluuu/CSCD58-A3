@@ -131,12 +131,13 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
   if (ip_interface != NULL) {
     struct sr_if *iface = sr_get_interface(sr, interface);
     protocol = ip_protocol(packet);
-    printf("## protocol: %d\n", protocol);
+    printf("Iface found, protocol: %d\n", protocol);
     /* TODO(Lu Jiaming): Finish the if statement block. */
     if (protocol == ip_protocol_icmp) {
       /* The packet is an ICMP echo request, send an ICMP echo reply to the
         sending host.
        */
+      printf("protocol is ICMP\n");
       icmp_hdr = (sr_icmp_hdr_t *)(packet + sizeof(struct sr_ethernet_hdr) + sizeof(sr_ip_hdr_t));
       header_checksum = cksum(icmp_hdr, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
 
@@ -156,7 +157,8 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
         elsewhere should be forwarded using your normal forwarding logic.
         send_icmp_response(sr, packet, len, interface, 3, 3, ip_interface);
       */
-      printf("## sendingtype 3 code 3\n");
+      printf("protocol is TCP or UDP\n");
+      printf("sending type 3 code 3\n");
       send_icmp_response(sr, packet, len, interface, 3, 3, ip_interface);
     }
   } else {
@@ -166,6 +168,7 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
       Decrement the TTL by 1, and recompute the packet checksum over the
       modified header.
      */
+    printf("Iface not found\n");
     printf("Decrementing TTL by 1.\n");
     ip_hdr->ip_ttl--;
     if (ip_hdr->ip_ttl == 0) {
