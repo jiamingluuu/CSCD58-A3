@@ -433,12 +433,19 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
   }
 
   memcpy(response_ip_hdr, request_ip_hdr, sizeof(sr_ip_hdr_t));
+  printf("1\n");
   response_ip_hdr->ip_ttl = INIT_TTL;
+  printf("2\n");
   response_ip_hdr->ip_p = ip_protocol_icmp;
+  printf("3\n");
   response_ip_hdr->ip_src = ip_src;
+  printf("4\n");
   response_ip_hdr->ip_dst = request_ip_hdr->ip_src;
+  printf("5\n");
   response_ip_hdr->ip_len = htons(response_len - sizeof(sr_ethernet_hdr_t));
+  printf("6\n");
   response_ip_hdr->ip_sum = 0;
+  printf("7\n");
   response_ip_hdr->ip_sum = cksum(response_ip_hdr, sizeof(sr_ip_hdr_t));
 
   /* ETH */
