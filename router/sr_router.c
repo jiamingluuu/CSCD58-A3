@@ -370,7 +370,6 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
     free(response);
     return;
   }
-
   request_eth_hdr = (sr_ethernet_hdr_t *)packet;
   request_ip_hdr = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
 
@@ -403,6 +402,10 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
     response_icmp_hdr->icmp_code = code;
     response_icmp_hdr->unused = 0;
     response_icmp_hdr->next_mtu = 0;
+
+    printf("request_ip_hdr address: %p\n", (void *)request_ip_hdr);
+    printf("response_icmp_hdr->data address: %p\n", (void *)response_icmp_hdr->data);
+
     memcpy(response_icmp_hdr->data, request_ip_hdr, ICMP_DATA_SIZE);
     response_icmp_hdr->icmp_sum = 0;
     response_icmp_hdr->icmp_sum = cksum(response_icmp_hdr, sizeof(sr_icmp_t3_hdr_t));
