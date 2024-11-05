@@ -390,24 +390,18 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
     response_icmp_hdr->icmp_sum =
         cksum(response_icmp_hdr, response_len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
   } else {
+    unsigned int ip_header_and_data_len = len - sizeof(sr_ethernet_hdr_t);
+    unsigned int copy_len = ip_header_and_data_len > ICMP_DATA_SIZE ? ICMP_DATA_SIZE : ip_header_and_data_len;
+    printf("## copy_len: %d\n", copy_len);
     sr_icmp_t3_hdr_t *response_icmp_hdr =
         (sr_icmp_t3_hdr_t *)(response + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
     response_icmp_hdr->icmp_type = type;
     response_icmp_hdr->icmp_code = code;
     response_icmp_hdr->unused = 0;
     response_icmp_hdr->next_mtu = 0;
-    memcpy(response_icmp_hdr->data, request_ip_hdr, ICMP_DATA_SIZE);
+    memcpy(response_icmp_hdr->data, request_ip_hdr, copy_len);
     response_icmp_hdr->icmp_sum = 0;
     response_icmp_hdr->icmp_sum = cksum(response_icmp_hdr, sizeof(sr_icmp_t3_hdr_t));
-  }
-
-  if (type == 0) {
-    response_icmp_hdr->icmp_sum = cksum(response_icmp_hdr, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
-  } else {
-    response_icmp_hdr->icmp_sum = cksum(response_icmp_hdr, sizeof(sr_icmp_t3_hdr_t));
-    response_icmp_hdr->unused = 0;
-    response_icmp_hdr->next_mtu = 0;
-    memcpy(response_icmp_hdr->data, request_ip_hdr, ICMP_DATA_SIZE);
   }
 
   /* IP */
