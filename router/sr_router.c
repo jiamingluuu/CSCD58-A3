@@ -423,6 +423,7 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
   } else {
     ip_src = ip_interface->ip;
   }
+  response_ip_hdr = (sr_ip_hdr_t *)(response + sizeof(sr_ethernet_hdr_t));
   printf("## Checking pointers and size before memcpy\n");
   printf("response_ip_hdr: %p\n", response_ip_hdr);
   printf("request_ip_hdr: %p\n", request_ip_hdr);
