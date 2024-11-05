@@ -370,21 +370,31 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
   }
 
   response = (uint8_t *)calloc(1, response_len);
-  printf("## casting\n");
-  response_eth_hdr = (sr_ethernet_hdr_t *)response;
-  response_ip_hdr = (sr_ip_hdr_t *)(response + sizeof(sr_ethernet_hdr_t));
-  response_icmp_hdr = (sr_icmp_t3_hdr_t *)(response + sizeof(sr_ip_hdr_t) + sizeof(sr_ethernet_hdr_t));
+
   printf("## getting iface\n");
   out_interface = sr_get_interface(sr, interface);
-  printf("## check the type\n");
+  printf("## sending icmp response.type: %d\n", type);
   /* ICMP */
   if (type == 0) {
-    printf("## type 0.\n");
-    memcpy(response_icmp_hdr, packet + sizeof(sr_ip_hdr_t) + sizeof(sr_ethernet_hdr_t),
+    // Fix: use `sr_icmp_hdr_t` in type 0
+    sr_icmp_hdr_t *response_icmp_hdr = (sr_icmp_hdr_t *)(response + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+    memcpy(response_icmp_hdr, packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t),
            response_len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
+    response_icmp_hdr->icmp_type = type;
+    response_icmp_hdr->icmp_code = code;
+    response_icmp_hdr->icmp_sum = 0;
+    response_icmp_hdr->icmp_sum =
+        cksum(response_icmp_hdr, response_len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
   } else {
-    printf("## sending icmp response.type: %d\n", type);
-    memcpy(response_icmp_hdr, request_ip_hdr, ICMP_DATA_SIZE);
+    sr_icmp_t3_hdr_t *response_icmp_hdr =
+        (sr_icmp_t3_hdr_t *)(response + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+    response_icmp_hdr->icmp_type = type;
+    response_icmp_hdr->icmp_code = code;
+    response_icmp_hdr->unused = 0;
+    response_icmp_hdr->next_mtu = 0;
+    memcpy(response_icmp_hdr->data, request_ip_hdr, ICMP_DATA_SIZE);
+    response_icmp_hdr->icmp_sum = 0;
+    response_icmp_hdr->icmp_sum = cksum(response_icmp_hdr, sizeof(sr_icmp_t3_hdr_t));
   }
 
   response_icmp_hdr->icmp_code = code;
