@@ -428,10 +428,10 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
   printf("request_ip_hdr: %p\n", request_ip_hdr);
   printf("sizeof(sr_ip_hdr_t): %zu\n", sizeof(sr_ip_hdr_t));
   if (response_len < sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t)) {
-    fprintf(stderr, "Error: response buffer size is insufficient.\n");
+    printf("Error: Packet length is too small for IP header.\n");
     return;
   }
-
+  printf("## copying ip header\n");
   memcpy(response_ip_hdr, request_ip_hdr, sizeof(sr_ip_hdr_t));
   printf("1\n");
   response_ip_hdr->ip_ttl = INIT_TTL;
