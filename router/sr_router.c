@@ -417,6 +417,7 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
 
     unsigned int ip_header_and_data_len = len - sizeof(sr_ethernet_hdr_t);
     unsigned int copy_len = ip_header_and_data_len > ICMP_DATA_SIZE ? ICMP_DATA_SIZE : ip_header_and_data_len;
+    printf("Actual copy_len: %d\n", copy_len);
     if (!request_ip_hdr) {
       fprintf(stderr, "Error: request_ip_hdr is NULL.\n");
       free(response);
@@ -427,9 +428,6 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
       free(response);
       return;
     }
-    unsigned int ip_header_and_data_len = len - sizeof(sr_ethernet_hdr_t);
-    unsigned int copy_len = ip_header_and_data_len > ICMP_DATA_SIZE ? ICMP_DATA_SIZE : ip_header_and_data_len;
-    printf("Actual copy_len: %d\n", copy_len);
     memcpy(response_icmp_hdr->data, request_ip_hdr, copy_len);
     response_icmp_hdr->icmp_sum = 0;
     response_icmp_hdr->icmp_sum = cksum(response_icmp_hdr, sizeof(sr_icmp_t3_hdr_t));
