@@ -431,7 +431,8 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
     printf("Error: Packet length is too small for IP header.\n");
     return;
   }
-  for (int i = 0; i < sizeof(sr_ip_hdr_t); i++) {
+  int i;
+  for (i = 0; i < sizeof(sr_ip_hdr_t); i++) {
     printf("Copying byte %d\n", i);
     ((uint8_t *)response_ip_hdr)[i] = ((uint8_t *)request_ip_hdr)[i];
   }
