@@ -430,7 +430,7 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
     printf("response_icmp_hdr->data: %p\n", response_icmp_hdr->data);
     printf("request_ip_hdr: %p\n", request_ip_hdr);
     printf("copy_len: %d\n", copy_len);
-    memcpy(response_icmp_hdr->data, request_ip_hdr, copy_len);
+    memmove(response_icmp_hdr->data, request_ip_hdr, copy_len);
     response_icmp_hdr->icmp_sum = 0;
     response_icmp_hdr->icmp_sum = cksum(response_icmp_hdr, sizeof(sr_icmp_t3_hdr_t));
   }
