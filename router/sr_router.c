@@ -423,6 +423,15 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
   } else {
     ip_src = ip_interface->ip;
   }
+  printf("## Checking pointers and size before memcpy\n");
+  printf("response_ip_hdr: %p\n", response_ip_hdr);
+  printf("request_ip_hdr: %p\n", request_ip_hdr);
+  printf("sizeof(sr_ip_hdr_t): %zu\n", sizeof(sr_ip_hdr_t));
+  if (response_len < sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t)) {
+    fprintf(stderr, "Error: response buffer size is insufficient.\n");
+    return;
+  }
+
   memcpy(response_ip_hdr, request_ip_hdr, sizeof(sr_ip_hdr_t));
   response_ip_hdr->ip_ttl = INIT_TTL;
   response_ip_hdr->ip_p = ip_protocol_icmp;
