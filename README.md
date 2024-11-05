@@ -35,7 +35,25 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
 ```
 
 ### In `sr_arpcache.c`
+This function gets called every second, tries to handle each one of the cached ARP request in the request queue.
+```c
+void sr_arpcache_sweepreqs(struct sr_instance *sr);
+```
 
+Invoked by `sr_arpcache_sweepreqs` to handles the corresponding ARP request. It iterates through the ARP request queue and re-sends any outstanding ARP requests that haven’t been sent in the past second. If an ARP request has been sent 5 times with no response, a destination host unreachable should go back to all the sender of packets that were waiting on a reply to this ARP request.
+```c
+void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *req);
+```
+
+Used to send ICMP type 3 response in `handle_arpreq`.
+```c
+void sr_send_icmp_t3(struct sr_instance *sr, uint8_t *packet, unsigned int len, const char *iface, uint8_t type, uint8_t code);
+```
+
+Used to create an ARP request in `handle_arpreq`
+```c
+uint8_t *create_arp_request(struct sr_instance *sr, uint32_t ip, const char *iface);
+```
 
 ## List of tests cases run and results
 According to the instructions in the handout, we mainly tested three commands `ping`, `traceroute` and `wget` to test the functionalities of the router. During the test, we used Wireshark as well as the console printing output to verify the correctness of the router.
