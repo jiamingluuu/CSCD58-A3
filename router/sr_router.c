@@ -405,12 +405,12 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
   } else {
     sr_icmp_t3_hdr_t *response_icmp_hdr =
         (sr_icmp_t3_hdr_t *)(response + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
-    response_icmp_hdr->next_mtu = 0;
     if ((uint8_t *)response_icmp_hdr + sizeof(sr_icmp_t3_hdr_t) > response + response_len) {
       fprintf(stderr, "Error: response_icmp_hdr exceeds response buffer.\n");
       free(response);
       return;
     }
+    response_icmp_hdr->next_mtu = 0;
     response_icmp_hdr->icmp_type = type;
     response_icmp_hdr->icmp_code = code;
     response_icmp_hdr->unused = 0;
@@ -430,7 +430,8 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
     printf("response_icmp_hdr->data: %p\n", response_icmp_hdr->data);
     printf("request_ip_hdr: %p\n", request_ip_hdr);
     printf("copy_len: %d\n", copy_len);
-    memmove(response_icmp_hdr->data, request_ip_hdr, copy_len);
+    memcpy(response_icmp_hdr->data, request_ip_hdr, copy_len);
+    printf("memcpy done\n");
     response_icmp_hdr->icmp_sum = 0;
     response_icmp_hdr->icmp_sum = cksum(response_icmp_hdr, sizeof(sr_icmp_t3_hdr_t));
   }
