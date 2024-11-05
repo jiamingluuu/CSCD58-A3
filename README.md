@@ -1,47 +1,40 @@
-## Names and details of the team members
-### Name: Jiaming Lu 
+# Group Members
 
-Student number: 1008494620
+| Name        | Student Number | Email                        |
+|-------------|----------------|------------------------------|
+| Jiaming Lu  | 1008494620     | jiaming.lu@mail.utoronto.ca  |
+| Zheyuan Wei | 1007626133     | zheyuan.wei@mail.utoronto.ca |
+| Yawen Zhang | 1006739772     | weng.zhang@mail.utoronto.ca  |
 
-Email: jiaming.lu@mail.utoronto.ca
+# Contributions
+- Jiaming Lu: Worked on handling IP packet with Yawen, mainly focused on the ICMP protocol handling in function `handle_ip_packet` and the relative helper funcitons such as `send_icmp_response` and `get_dst_interface`, as well as debug and test works for the whole router project.
+- Zheyuan Wei: Worked on handling ARP packet, implemented the function `handle_arp_packet` and the relative helper functions, such as funcitons in `sr_arpcache.c`,  as well as debug and test works for the whole router project.
+- Yawen Zhang: Worked on handling IP packet with Jiaming, mainly focused on the ARP protocol handling in function `handle_ip_packet` and the relative helper funcitons, such as functions in `sr_rt.c`, as well as debug and test works for the whole router project.
 
-Contributions: Worked on handling IP packet with Yawen, mainly focused on the ICMP protocol handling in function `handle_ip_packet` and the relative helper funcitons such as `send_icmp_response` and `get_dst_interface`, as well as debug and test works for the whole router project.
+# Project Description
+## Function documentation 
+### In `sr_router.c`
+Handles IP packets.
+```c
+static void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface);
+```
 
-### Name: Zheyuan Wei
-Student number: 1007626133
+Handles ARP packets.
+```c
+static void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface);
+```
 
-Email: zheyuan.wei@mail.utoronto.ca
+Helper function used in `hanle_ip_packet` to lookup interface with matching IP destination address.
+```c
+static struct sr_if *get_dst_interface(const struct sr_instance *sr, const sr_ip_hdr_t *ip_hdr);
+```
 
-Contributions: Worked on hadnling ARP packet, implemented the function `handle_arp_packet` and the relative helper functions, such as funcitons in `sr_arpcache.c`,  as well as debug and test works for the whole router project.
+Send ICMP packets to `dst_interface`. If `dst_interface == NULL`, it means the destination of the IP packet is one of our router's interface, we therefore find the destination interface via `interface` and send a response accordingly.
+```c
+static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface, uint8_t type, uint8_t code, struct sr_if *dst_interface);
+```
 
-### Name: Yawen Zhang
-Student number: 1006739772
-
-Email: weng.zhang@mail.utoronto.ca
-
-Contributions: Worked on handling IP packet with Jiaming, mainly focused on the ARP protocol handling in function `handle_ip_packet` and the relative helper funcitons, such as functions in `sr_rt.c`, as well as debug and test works for the whole router project.
-
-## Description and documentation for the functions that implemented the required and missed functionalities in the starter code
-- The router must successfully route packets between the Internet and the application servers.
-  
-  
-- The router must correctly handle ARP requests and replies.
-- The router must correctly handle traceroutes through it (where it is not the end host) and to it
-(where it is the end host).
-- The router must respond correctly to ICMP echo requests.
-- The router must handle TCP/UDP packets sent to one of its interfaces. In this case the router
-should respond with an ICMP port unreachable.
-- The router must maintain an ARP cache whose entries are invalidated after a timeout period
-(timeouts should be on the order of 15 seconds).
-- The router must queue all packets waiting for outstanding ARP replies. If a host does not respond
-to 5 ARP requests, the queued packet is dropped and an ICMP host unreachable message is sent
-back to the source of the queued packet.
-- The router must not needlessly drop packets (for example when waiting for an ARP reply)
-- The router must enforce guarantees on timeouts–that is, if an ARP request is not responded to
-within a fixed period of time, the ICMP host unreachable message is generated even if no more packets
-arrive at the router. (Note: You can guarantee this by implementing the sr arpcache sweepreqs
-function in sr arpcache.c correctly.)
-12
+### In `sr_arpcache.c`
 
 
 ## List of tests cases run and results
