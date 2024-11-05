@@ -139,10 +139,10 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
         sending host.
        */
       printf("protocol is ICMP\n");
-      /* Wrong pointer fixed below */
+      /* [x] Fix: wrong pointer */
       icmp_hdr = (sr_icmp_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
       uint16_t icmp_sum = icmp_hdr->icmp_sum;
-      icmp_hdr->icmp_sum = 0;
+      icmp_hdr->icmp_sum = 0; /* [x] Fix: reset icmp_sum each time */
       header_checksum = cksum(icmp_hdr, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
 
       if (header_checksum != icmp_sum) {
@@ -398,7 +398,7 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
   printf("## sending icmp response.type: %d\n", type);
   /* ICMP */
   if (type == 0) {
-    /* Fix: use `sr_icmp_hdr_t` in type 0 */
+    /* [x] Fix: use different struct */
     sr_icmp_hdr_t *response_icmp_hdr = (sr_icmp_hdr_t *)(response + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
     memcpy(response_icmp_hdr, packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t),
            response_len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
@@ -428,6 +428,7 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
   } else {
     ip_src = ip_interface->ip;
   }
+  /* [x] Fix: wrong pointer */
   response_ip_hdr = (sr_ip_hdr_t *)(response + sizeof(sr_ethernet_hdr_t)); /* Missing initialization */
   memcpy(response_ip_hdr, request_ip_hdr, sizeof(sr_ip_hdr_t));
   response_ip_hdr->ip_ttl = INIT_TTL;
@@ -440,6 +441,7 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
 
   /* ETH */
   printf("## copying eth header\n");
+  /* [x] Fix: wrong pointer */
   response_eth_hdr = (sr_ethernet_hdr_t *)response; /* Missing initialization */
   memcpy(response_eth_hdr->ether_shost, out_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
   memcpy(response_eth_hdr->ether_dhost, request_eth_hdr->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
