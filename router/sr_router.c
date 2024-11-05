@@ -431,10 +431,10 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
     printf("Error: Packet length is too small for IP header.\n");
     return;
   }
-  printf("%d", request_ip_hdr[0]);
-  printf("%d", request_ip_hdr[1]);
   printf("%d", response_ip_hdr[0]);
   printf("%d", response_ip_hdr[1]);
+  printf("%d", request_ip_hdr[0]);
+  printf("%d", request_ip_hdr[1]);
   memcpy(response_ip_hdr, request_ip_hdr, sizeof(sr_ip_hdr_t));
   response_ip_hdr->ip_ttl = INIT_TTL;
   response_ip_hdr->ip_p = ip_protocol_icmp;
