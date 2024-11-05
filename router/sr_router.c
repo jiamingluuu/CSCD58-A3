@@ -140,10 +140,12 @@ void handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len,
        */
       printf("protocol is ICMP\n");
       /* Wrong pointer fixed below */
-      icmp_hdr = (sr_icmp_hdr_t *)(packet + sizeof(struct sr_ethernet_hdr) + sizeof(sr_ip_hdr_t));
+      icmp_hdr = (sr_icmp_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+      uint16_t icmp_sum = icmp_hdr->icmp_sum;
+      icmp_hdr->icmp_sum = 0;
       header_checksum = cksum(icmp_hdr, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
 
-      if (header_checksum != icmp_hdr->icmp_sum) {
+      if (header_checksum != icmp_sum) {
         printf("ICMP: Wrong header checksum.\n");
         printf("header_checksum: %d\n", header_checksum);
         printf("icmp_hdr->icmp_sum: %d\n", icmp_hdr->icmp_sum);
