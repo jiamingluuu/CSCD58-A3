@@ -428,6 +428,7 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
       free(response);
       return;
     }
+    printf("response_icmp_hdr->data: %p\n", response_icmp_hdr->data);
     memcpy(response_icmp_hdr->data, request_ip_hdr, copy_len);
     response_icmp_hdr->icmp_sum = 0;
     response_icmp_hdr->icmp_sum = cksum(response_icmp_hdr, sizeof(sr_icmp_t3_hdr_t));
