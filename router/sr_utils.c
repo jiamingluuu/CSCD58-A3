@@ -32,7 +32,7 @@ uint16_t ethertype(uint8_t *buf) {
 
 uint8_t ip_protocol(uint8_t *buf) {
   sr_ip_hdr_t *iphdr = (sr_ip_hdr_t *)(buf);
-  return ntohs(iphdr->ip_p);
+  return (iphdr->ip_p);
 }
 
 /* Prints out formatted Ethernet address, e.g. 00:11:22:33:44:55 */
