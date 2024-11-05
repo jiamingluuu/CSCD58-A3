@@ -384,6 +384,8 @@ static void send_icmp_response(struct sr_instance *sr, uint8_t *packet, unsigned
     response_len = sizeof(sr_icmp_t3_hdr_t) + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t);
   }
 
+  printf("response_len: %d\n", response_len);
+
   response = (uint8_t *)calloc(1, response_len);
 
   printf("## getting iface\n");
