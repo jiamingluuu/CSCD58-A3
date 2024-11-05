@@ -207,7 +207,7 @@ int sr_handle_hwinfo(struct sr_instance* sr, c_hwinfo* hwinfo) {
       default:
         printf(" %d \n", ntohl(hwinfo->mHWInfo[i].mKey));
     } /* -- switch -- */
-  }   /* -- for -- */
+  } /* -- for -- */
 
   printf("Router interfaces:\n");
   sr_print_if_list(sr);
@@ -539,7 +539,7 @@ int sr_send_packet(struct sr_instance* sr /* borrowed */, uint8_t* buf /* borrow
 
   /* don't waste my time ... */
   if (len < sizeof(struct sr_ethernet_hdr)) {
-    fprintf(stderr, "** Error: packet is wayy to short \n");
+    fprintf(stderr, "** Error: packet is too short \n");
     return -1;
   }
 
